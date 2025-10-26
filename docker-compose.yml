@@ -64,7 +64,7 @@ services:
     ports:
       - "80:8501"
     restart: always
-    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+    # command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
     
 volumes:
   pg_data:
