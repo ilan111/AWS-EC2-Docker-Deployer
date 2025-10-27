@@ -50,11 +50,13 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: postgresql://postgres:postgres@postgres:5432/postgres
-      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      # GITHUB_TOKEN: ${GITHUB_TOKEN}
       #OPENAI_API_KEY: ${OPENAI_API_KEY}
     depends_on:
       - kafka
       - postgres
+    env_file:
+      - .env
 
   streamlit:
     container_name: streamlit_app
@@ -64,6 +66,12 @@ services:
     ports:
       - "80:8501"
     restart: always
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      - API_URL=http://api:8000   # override only inside docker network
     # command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
     
 volumes:

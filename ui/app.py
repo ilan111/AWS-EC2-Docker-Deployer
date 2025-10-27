@@ -2,8 +2,9 @@ import streamlit as st
 import requests
 import time
 import json
+import os
 
-API_URL = "http://localhost:8000"
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 st.title("🚀 AWS EC2 Docker Deployer")
 
@@ -61,7 +62,9 @@ if st.session_state.request_id and not st.session_state.ai_result:
             while True:
                 time.sleep(1)
                 poll = requests.get(f"{API_URL}/result/{st.session_state.request_id}")
+                print(poll)
                 poll_result = poll.json()
+                print(poll_result)
 
                 if poll_result["status"] == "done":
                     st.session_state.ai_result = json.loads(poll_result["result"])
@@ -70,7 +73,9 @@ if st.session_state.request_id and not st.session_state.ai_result:
                 else:
                     st.info("⏳ AI is still processing...")
         except Exception as e:
+            st.write(f"{poll_result}")
             st.error(f"Error fetching result: {e}")
+            st.error(f"Please make sure you have configured OpenAI API key with 'GITHUB_TOKEN' environment variable")
 
 # Display AI-generated configuration and confirmation
 if st.session_state.ai_result and not st.session_state.confirmed:

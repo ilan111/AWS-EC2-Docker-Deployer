@@ -1,7 +1,9 @@
 import logging
 import os
+from dotenv import load_dotenv
 from openai import OpenAI
 
+load_dotenv()
 log = logging.getLogger("ai_service")
 class AIService:
     def __init__(self):
@@ -11,6 +13,7 @@ class AIService:
             # log.warning("OPENAI_API_KEY not set - AI service will return mock responses")
             self.client = None
         else:
+            log.info(f"GITHUB_TOKEN ASSIGNED")
             self.client = OpenAI(
                 api_key=api_key,
                 base_url="https://models.github.ai/inference",     
