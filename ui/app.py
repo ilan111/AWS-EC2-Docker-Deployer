@@ -3,10 +3,17 @@ import requests
 import time
 import json
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
+st.set_page_config(page_title="AWS EC2 Docker Deployer")
+
 st.title("🚀 AWS EC2 Docker Deployer")
+
+if not "GITHUB_TOKEN" in os.environ:
+        st.warning(f"Please assign your OpenAI API key to 'GITHUB_TOKEN' variable inside .env file\n\nThen run 'docker compose up -d --build'")
 
 st.info("""
 **Before deploying, make sure you have done the following:**
