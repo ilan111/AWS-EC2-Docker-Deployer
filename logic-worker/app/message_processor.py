@@ -44,35 +44,35 @@ class MessageProcessor:
             db_request.status = "in_progress"
             db.commit()
 
-        try:
-            region = message_data["region"]
-            instance_type = message_data["instance_type"]
-            docker_image = message_data["docker_image"]
-            key_name = message_data.get("key_name")
-            security_group = message_data.get("security_group", "default")
-            aws_access_key = message_data["aws_access_key"]
-            aws_secret_key = message_data["aws_secret_key"]
-            instance_id = create_ec2_instance(
-                region=region, 
-                instance_type=instance_type, 
-                docker_image=docker_image, 
-                key_name=key_name, 
-                security_group=security_group,
-                aws_access_key_id=aws_access_key,
-                aws_secret_access_key=aws_secret_key
-            )
+            try:
+                region = message_data["region"]
+                instance_type = message_data["instance_type"]
+                docker_image = message_data["docker_image"]
+                key_name = message_data.get("key_name")
+                security_group = message_data.get("security_group", "default")
+                aws_access_key = message_data["aws_access_key"]
+                aws_secret_key = message_data["aws_secret_key"]
+                instance_id = create_ec2_instance(
+                    region=region, 
+                    instance_type=instance_type, 
+                    docker_image=docker_image, 
+                    key_name=key_name, 
+                    security_group=security_group,
+                    aws_access_key_id=aws_access_key,
+                    aws_secret_access_key=aws_secret_key
+                )
 
-             # Update DB on success
-            db_request.status = "deployed"
-            db_request.result = json.dumps({"instance_id": instance_id})
-            db.commit()
-            log.info(f"✅ EC2 deployment complete for request {request_id}")
-
-        except Exception as e:
-                log.error(f"❌ EC2 deployment failed for {request_id}: {e}")
-                db_request.status = "failed"
-                db_request.result = json.dumps({"error": str(e)})
+                # Update DB on success
+                db_request.status = "deployed"
+                db_request.result = json.dumps({"instance_id": instance_id})
                 db.commit()
+                log.info(f"✅ EC2 deployment complete for request {request_id}")
+
+            except Exception as e:
+                    log.error(f"❌ EC2 deployment failed for {request_id}: {e}")
+                    db_request.status = "failed"
+                    db_request.result = json.dumps({"error": str(e)})
+                    db.commit()
 
     def handle_message(self, topic, message_data: dict):
         try:

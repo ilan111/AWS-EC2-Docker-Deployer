@@ -1,8 +1,8 @@
 import logging
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
 from shared.db import SessionLocal
 from shared.models import RequestStatus
 from .kafka_producer import send_message
@@ -41,30 +41,42 @@ def send_user_request(request: UserRequest):
 
 @router.get("/result/{request_id}", response_model=ResultResponse)
 def get_request_result(request_id: int):
-    with SessionLocal() as db:
-        db_request = db.query(RequestStatus).filter(RequestStatus.id == request_id).first()
+    try:
+        with SessionLocal() as db:
+            db_request = db.query(RequestStatus).filter(RequestStatus.id == request_id).first()
 
-        if not db_request:
-            raise HTTPException(status_code=404, detail="Request not found")
+            if not db_request:
+                return JSONResponse(status_code=404, content={"error": "Request not found"})
 
-        if db_request.status == "done":
-            result = db_request.result
-            # db.delete(db_request)
-            db.commit()
-            return ResultResponse(status="done", result=result)
-        
-        elif db_request.status == "in_progress":
-            return ResultResponse(status="in_progress")
-        
-        elif db_request.status == "deploying":
-            return ResultResponse(status="deploying")
-        
-        elif db_request.status == "deployed":
-            return ResultResponse(status="deployed")
-        
-        elif db_request.status == "faild":
-            return ResultResponse(status="faild")
-        
+            if db_request.status == "failed":
+                try:
+                    result_data = json.loads(db_request.result)
+                except Exception:
+                    result_data = {"error": db_request.result or "Unknown error"}
+                return ResultResponse(status="failed", result=json.dumps(result_data))
+
+            if db_request.status == "done":
+                result = json.loads(db_request.result)
+                print("result:", result)
+                print("ai_message:", result.get("ai_message"))
+                return ResultResponse(status="done", result=str(result.get("ai_message", "")))
+
+            elif db_request.status == "in_progress":
+                return ResultResponse(status="in_progress")
+
+            elif db_request.status == "deploying":
+                return ResultResponse(status="deploying")
+
+            elif db_request.status == "deployed":
+                return ResultResponse(status="deployed")
+
+            elif db_request.status == "failed":
+                return ResultResponse(status="failed")
+
+    except Exception as e:
+        log.exception(f"Error fetching result for request {request_id}: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+       
 
 class EC2Credentials(BaseModel):
     request_id: int

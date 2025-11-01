@@ -145,6 +145,7 @@ def create_ec2_instance(region,
             UserData=user_data_script
         )
         # Return the instance ID
+        log.info("AWS RESPONSE: ", response)
         instance_id = response['Instances'][0]['InstanceId']
         log.info(f"Created EC2 instance with ID: {instance_id}")
         return instance_id
