@@ -253,40 +253,63 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
                 progress_placeholder.empty()
                 status_placeholder.success("🎉 EC2 deployment completed successfully!")
                 
-                # Extract and format deployment details
-                result_data = status_result.get("result", {})
+                # Give DB a moment to update with final details
+                time.sleep(2)
                 
-                # Try to parse result if it's a JSON string
+                # Fetch the result again to get updated details
+                final_result = make_api_request("GET", f"/result/{request_id}")
+                if final_result and "error" not in final_result:
+                    result_data = final_result.get("result")
+                else:
+                    result_data = status_result.get("result")
+                
+                # Parse the result - it's a JSON string in the database
+                parsed_data = {}
                 if isinstance(result_data, str):
                     try:
-                        result_data = json.loads(result_data)
-                    except:
-                        pass
+                        parsed_data = json.loads(result_data)
+                    except json.JSONDecodeError as e:
+                        # If parsing fails, try one more time after another delay
+                        time.sleep(10)
+                        retry_result = make_api_request("GET", f"/result/{request_id}")
+                        if retry_result and "error" not in retry_result:
+                            retry_data = retry_result.get("result")
+                            if isinstance(retry_data, str):
+                                try:
+                                    parsed_data = json.loads(retry_data)
+                                except:
+                                    parsed_data = {"raw_result": result_data}
+                            elif isinstance(retry_data, dict):
+                                parsed_data = retry_data
+                        else:
+                            parsed_data = {"raw_result": result_data}
+                elif isinstance(result_data, dict):
+                    parsed_data = result_data
                 
                 # Build deployment details message
                 details_lines = ["<strong>✅ Deployment Successful!</strong><br><br>"]
                 
-                if isinstance(result_data, dict):
+                if parsed_data and parsed_data != {"raw_result": result_data}:
                     # Try different possible field names
-                    instance_id = result_data.get("instance_id") or result_data.get("InstanceId") or result_data.get("id")
-                    public_ip = result_data.get("public_ip") or result_data.get("PublicIp") or result_data.get("ip")
-                    region = result_data.get("region") or result_data.get("Region")
-                    instance_type = result_data.get("instance_type") or result_data.get("InstanceType")
+                    instance_id = parsed_data.get("instance_id") or parsed_data.get("InstanceId") or parsed_data.get("id")
+                    public_ip = parsed_data.get("public_ip") or parsed_data.get("PublicIp") or parsed_data.get("ip")
+                    region = parsed_data.get("region") or parsed_data.get("Region")
+                    instance_type = parsed_data.get("instance_type") or parsed_data.get("InstanceType")
                     
                     if instance_id:
-                        details_lines.append(f"<strong>Instance ID:</strong> {instance_id}<br>")
+                        details_lines.append(f"<strong>Instance ID:</strong> <code>{instance_id}</code><br>")
                     if public_ip:
-                        details_lines.append(f"<strong>Public IP:</strong> {public_ip}<br>")
+                        details_lines.append(f"<strong>Public IP:</strong> <code>{public_ip}</code><br>")
                     if region:
-                        details_lines.append(f"<strong>Region:</strong> {region}<br>")
+                        details_lines.append(f"<strong>Region:</strong> <code>{region}</code><br>")
                     if instance_type:
-                        details_lines.append(f"<strong>Instance Type:</strong> {instance_type}<br>")
+                        details_lines.append(f"<strong>Instance Type:</strong> <code>{instance_type}</code><br>")
                     
                     # If no specific fields found, show the whole dict
-                    if len(details_lines) == 1:
-                        details_lines.append(f"<pre>{json.dumps(result_data, indent=2)}</pre>")
+                    if len(details_lines) == 1 and parsed_data:
+                        details_lines.append(f"<strong>Details:</strong><br><pre style='background:#1a1a1a;padding:10px;border-radius:5px;'>{json.dumps(parsed_data, indent=2)}</pre>")
                 else:
-                    details_lines.append(f"{result_data}")
+                    details_lines.append("Deployment completed. Check AWS Console for instance details.")
                 
                 deployment_message = "".join(details_lines)
                 
@@ -409,14 +432,15 @@ if st.session_state.confirmed and not st.session_state.deployment_complete:
 
 # Step 5: Show success message and option to deploy another
 if st.session_state.deployment_complete:
-    # Keep the chat visible
     st.subheader("💬 Configuration Chat")
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+    
+    # Show original conversation
     if st.session_state.user_prompt:
         display_chat_message(st.session_state.user_prompt, sender="user")
     display_chat_message(st.session_state.ai_result, sender="ai", show_label=False)
     
-    # Display deployment details as AI message
+    # Add deployment details as a new AI message
     if st.session_state.deployment_message:
         display_chat_message(st.session_state.deployment_message, sender="ai", show_label=False)
     
