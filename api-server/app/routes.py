@@ -43,35 +43,39 @@ def send_user_request(request: UserRequest):
 def get_request_result(request_id: int):
     try:
         with SessionLocal() as db:
+            db.expire_all()
             db_request = db.query(RequestStatus).filter(RequestStatus.id == request_id).first()
 
             if not db_request:
                 return JSONResponse(status_code=404, content={"error": "Request not found"})
+            
+            # Refresh to get latest data
+            db.refresh(db_request)
 
             if db_request.status == "failed":
                 try:
-                    result_data = json.loads(db_request.result)
+                    result_data = json.loads(db_request.result) if db_request.result else {}
                 except Exception:
                     result_data = {"error": db_request.result or "Unknown error"}
                 return ResultResponse(status="failed", result=json.dumps(result_data))
 
-            if db_request.status == "done":
-                result = json.loads(db_request.result)
-                print("result:", result)
-                print("ai_message:", result.get("ai_message"))
+            elif db_request.status == "done":
+                result = json.loads(db_request.result) if db_request.result else {}
                 return ResultResponse(status="done", result=str(result.get("ai_message", "")))
 
-            elif db_request.status == "in_progress":
-                return ResultResponse(status="in_progress")
-
-            elif db_request.status == "deploying":
-                return ResultResponse(status="deploying")
-
             elif db_request.status == "deployed":
-                return ResultResponse(status="deployed")
+                # ← FIX: Return the result field with deployment details!
+                return ResultResponse(
+                    status="deployed", 
+                    result=db_request.result  # This contains the JSON string with public_ip and console_link
+                )
 
-            elif db_request.status == "failed":
-                return ResultResponse(status="failed")
+            elif db_request.status in ("in_progress", "deploying"):
+                return ResultResponse(status=db_request.status)
+
+            else:
+                # Fallback for any other status
+                return ResultResponse(status=db_request.status, result=db_request.result)
 
     except Exception as e:
         log.exception(f"Error fetching result for request {request_id}: {e}")

@@ -43,6 +43,7 @@ class MessageProcessor:
             # Update status to "in_progress"
             db_request.status = "in_progress"
             db.commit()
+            db.refresh(db_request)  # ← ADD THIS
 
             try:
                 region = message_data["region"]
@@ -52,6 +53,7 @@ class MessageProcessor:
                 security_group = message_data.get("security_group", "default")
                 aws_access_key = message_data["aws_access_key"]
                 aws_secret_key = message_data["aws_secret_key"]
+                
                 instance_details_json = create_ec2_instance(
                     region=region, 
                     instance_type=instance_type, 
@@ -64,15 +66,24 @@ class MessageProcessor:
 
                 # Update DB on success
                 db_request.status = "deployed"
-                db_request.result = json.dumps({"public_ip": instance_details_json["public_ip"], "console_link": instance_details_json["console_link"]})
+                result_json = json.dumps({
+                    "public_ip": instance_details_json["public_ip"], 
+                    "console_link": instance_details_json["console_link"]
+                })
+                db_request.result = result_json
                 db.commit()
+                db.refresh(db_request)  # ← ADD THIS
+                
                 log.info(f"✅ EC2 deployment complete for request {request_id}")
+                log.info(f"✅ Result stored: {result_json}")  # ← ADD THIS FOR DEBUGGING
 
             except Exception as e:
-                    log.error(f"❌ EC2 deployment failed for {request_id}: {e}")
-                    db_request.status = "failed"
-                    db_request.result = json.dumps({"error": str(e)})
-                    db.commit()
+                log.error(f"❌ EC2 deployment failed for {request_id}: {e}")
+                db_request.status = "failed"
+                error_json = json.dumps({"error": str(e)})
+                db_request.result = error_json
+                db.commit()
+                db.refresh(db_request)  # ← ADD THIS
 
     def handle_message(self, topic, message_data: dict):
         try:

@@ -254,61 +254,72 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
                 status_placeholder.success("🎉 EC2 deployment completed successfully!")
                 
                 # Give DB a moment to update with final details
-                time.sleep(2)
+                time.sleep(3)
                 
                 # Fetch the result again to get updated details
                 final_result = make_api_request("GET", f"/result/{request_id}")
+
+                print("FINAL-RESULT: ", final_result)
+                
                 if final_result and "error" not in final_result:
                     result_data = final_result.get("result")
+                    print("RESULT-DATA: ", result_data)
                 else:
                     result_data = status_result.get("result")
+                    print("RESULT-DATA-STATUS: ", status_result)
                 
                 # Parse the result - it's a JSON string in the database
-                parsed_data = {}
-                if isinstance(result_data, str):
+                parsed_data = None
+                
+                if isinstance(result_data, str) and result_data.strip():
                     try:
                         parsed_data = json.loads(result_data)
-                    except json.JSONDecodeError as e:
-                        # If parsing fails, try one more time after another delay
-                        time.sleep(10)
+                    except json.JSONDecodeError:
+                        # Retry once more if parsing fails
+                        time.sleep(2)
                         retry_result = make_api_request("GET", f"/result/{request_id}")
                         if retry_result and "error" not in retry_result:
                             retry_data = retry_result.get("result")
-                            if isinstance(retry_data, str):
+                            if isinstance(retry_data, str) and retry_data.strip():
                                 try:
                                     parsed_data = json.loads(retry_data)
                                 except:
-                                    parsed_data = {"raw_result": result_data}
-                            elif isinstance(retry_data, dict):
-                                parsed_data = retry_data
-                        else:
-                            parsed_data = {"raw_result": result_data}
+                                    pass
                 elif isinstance(result_data, dict):
                     parsed_data = result_data
                 
                 # Build deployment details message
                 details_lines = ["<strong>✅ Deployment Successful!</strong><br><br>"]
                 
-                if parsed_data and parsed_data != {"raw_result": result_data}:
-                    # Try different possible field names
-                    instance_id = parsed_data.get("instance_id") or parsed_data.get("InstanceId") or parsed_data.get("id")
-                    public_ip = parsed_data.get("public_ip") or parsed_data.get("PublicIp") or parsed_data.get("ip")
-                    region = parsed_data.get("region") or parsed_data.get("Region")
-                    instance_type = parsed_data.get("instance_type") or parsed_data.get("InstanceType")
+                # Check if we have valid parsed data
+                if parsed_data and isinstance(parsed_data, dict) and len(parsed_data) > 0:
+                    # Extract your specific fields
+                    public_ip = parsed_data.get("public_ip")
+                    console_link = parsed_data.get("console_link")
+                    print("PUBLIC-IP: ", public_ip, " CONSOLE-LINK: ", console_link)
                     
-                    if instance_id:
-                        details_lines.append(f"<strong>Instance ID:</strong> <code>{instance_id}</code><br>")
+                    # Also try alternative field names
+                    # instance_id = parsed_data.get("instance_id") or parsed_data.get("InstanceId") or parsed_data.get("id")
+                    # region = parsed_data.get("region") or parsed_data.get("Region")
+                    # instance_type = parsed_data.get("instance_type") or parsed_data.get("InstanceType")
+                    
+                    # Display available fields
+                    # if instance_id:
+                    #     details_lines.append(f"<strong>Instance ID:</strong> <code>{instance_id}</code><br>")
                     if public_ip:
                         details_lines.append(f"<strong>Public IP:</strong> <code>{public_ip}</code><br>")
-                    if region:
-                        details_lines.append(f"<strong>Region:</strong> <code>{region}</code><br>")
-                    if instance_type:
-                        details_lines.append(f"<strong>Instance Type:</strong> <code>{instance_type}</code><br>")
+                    # if region:
+                    #     details_lines.append(f"<strong>Region:</strong> <code>{region}</code><br>")
+                    # if instance_type:
+                    #     details_lines.append(f"<strong>Instance Type:</strong> <code>{instance_type}</code><br>")
+                    if console_link:
+                        details_lines.append(f"<strong>Console Link:</strong> <a href='{console_link}' target='_blank' style='color: #667eea;'>View in AWS Console →</a><br>")
                     
-                    # If no specific fields found, show the whole dict
-                    if len(details_lines) == 1 and parsed_data:
-                        details_lines.append(f"<strong>Details:</strong><br><pre style='background:#1a1a1a;padding:10px;border-radius:5px;'>{json.dumps(parsed_data, indent=2)}</pre>")
+                    # If we only have the header (no fields were added), show all data
+                    if len(details_lines) == 1:
+                        details_lines.append(f"<strong>Details:</strong><br><pre style='background:#1a1a1a;padding:10px;border-radius:5px;overflow-x:auto;'>{json.dumps(parsed_data, indent=2)}</pre>")
                 else:
+                    # Fallback message
                     details_lines.append("Deployment completed. Check AWS Console for instance details.")
                 
                 deployment_message = "".join(details_lines)
