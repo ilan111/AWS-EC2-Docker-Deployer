@@ -52,7 +52,7 @@ class MessageProcessor:
                 security_group = message_data.get("security_group", "default")
                 aws_access_key = message_data["aws_access_key"]
                 aws_secret_key = message_data["aws_secret_key"]
-                instance_id = create_ec2_instance(
+                instance_details_json = create_ec2_instance(
                     region=region, 
                     instance_type=instance_type, 
                     docker_image=docker_image, 
@@ -64,7 +64,7 @@ class MessageProcessor:
 
                 # Update DB on success
                 db_request.status = "deployed"
-                db_request.result = json.dumps({"instance_id": instance_id})
+                db_request.result = json.dumps({"public_ip": instance_details_json["public_ip"], "console_link": instance_details_json["console_link"]})
                 db.commit()
                 log.info(f"✅ EC2 deployment complete for request {request_id}")
 
