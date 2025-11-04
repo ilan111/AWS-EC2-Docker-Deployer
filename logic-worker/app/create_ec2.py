@@ -83,17 +83,10 @@ def create_ec2_instance(region,
     - user_data (str, optional): Bash commands to execute during instance setup
     
     Returns:
-    - str: EC2 instance ID
+    - dict: Dictionary containing 'public_ip' and 'console_link'
     """
     # Initialize EC2 client
     ec2 = validate_ec2_credentials(region=region, aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
-
-    # ec2 = boto3.client(
-    #     'ec2', 
-    #     region_name=region,
-    #     aws_access_key_id = aws_access_key_id,
-    #     aws_secret_access_key = aws_secret_access_key,
-    # )
 
     # Get default security group
     sg = ec2.describe_security_groups(GroupNames=['default'])['SecurityGroups'][0]
@@ -144,11 +137,29 @@ def create_ec2_instance(region,
             SecurityGroupIds=[sg_id],
             UserData=user_data_script
         )
-        # Return the instance ID
-        log.info("AWS RESPONSE: ", response)
+        
         instance_id = response['Instances'][0]['InstanceId']
         log.info(f"Created EC2 instance with ID: {instance_id}")
-        return instance_id
+        
+        # Wait for the instance to be running
+        log.info("Waiting for instance to be running...")
+        waiter = ec2.get_waiter('instance_running')
+        waiter.wait(InstanceIds=[instance_id])
+        
+        # Get the public IP address
+        instance_info = ec2.describe_instances(InstanceIds=[instance_id])
+        public_ip = instance_info['Reservations'][0]['Instances'][0]['PublicIpAddress']
+        
+        # Construct AWS Console link
+        console_link = f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#InstanceDetails:instanceId={instance_id}"
+        
+        log.info(f"Instance {instance_id} is running with public IP: {public_ip}")
+        log.info(f"AWS Console link: {console_link}")
+        
+        return {
+            'public_ip': public_ip,
+            'console_link': console_link
+        }
 
     except Exception as e:
         raise Exception(f"Error: {e}")
