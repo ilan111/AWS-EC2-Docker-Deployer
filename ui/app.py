@@ -6,6 +6,12 @@ import os
 import json
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
+from background import add_responsive_bg
+
+# Page configuration
+st.set_page_config(page_title="AWS EC2 Docker Deployer", page_icon="🚀")
+
+add_responsive_bg("./assets/background.jpg")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,8 +21,6 @@ log = logging.getLogger("streamlit")
 load_dotenv()
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
-# Page configuration
-st.set_page_config(page_title="AWS EC2 Docker Deployer", page_icon="🚀")
 
 # Custom CSS for better styling
 st.markdown("""
