@@ -43,7 +43,7 @@ class MessageProcessor:
             # Update status to "in_progress"
             db_request.status = "in_progress"
             db.commit()
-            db.refresh(db_request)  # ← ADD THIS
+            db.refresh(db_request)  
 
             try:
                 region = message_data["region"]
@@ -72,18 +72,18 @@ class MessageProcessor:
                 })
                 db_request.result = result_json
                 db.commit()
-                db.refresh(db_request)  # ← ADD THIS
+                db.refresh(db_request)  
                 
-                log.info(f"✅ EC2 deployment complete for request {request_id}")
-                log.info(f"✅ Result stored: {result_json}")  # ← ADD THIS FOR DEBUGGING
+                log.info(f"EC2 deployment complete for request {request_id}")
+                log.info(f"Result stored: {result_json}")  
 
             except Exception as e:
-                log.error(f"❌ EC2 deployment failed for {request_id}: {e}")
+                log.error(f"EC2 deployment failed for {request_id}: {e}")
                 db_request.status = "failed"
                 error_json = json.dumps({"error": str(e)})
                 db_request.result = error_json
                 db.commit()
-                db.refresh(db_request)  # ← ADD THIS
+                db.refresh(db_request)  
 
     def handle_message(self, topic, message_data: dict):
         try:

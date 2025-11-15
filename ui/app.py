@@ -35,7 +35,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🚀 AWS EC2 Docker Deployer")
+st.title("AWS EC2 Docker Deployer")
 
 # Check for API key
 if "GITHUB_TOKEN" not in os.environ:
@@ -48,9 +48,9 @@ if "GITHUB_TOKEN" not in os.environ:
 st.info("""
 **Before deploying, make sure you have done the following:**
 
-* ✅ Create an **IAM User** in AWS and generate **Access Key** and **Secret Key** with full EC2 permissions.
-* ✅ Create a **Key Pair** in AWS.
-* ✅ Choose the **region** where this key pair exists and enter its **exact name** in the form.
+*  Create an **IAM User** in AWS and generate **Access Key** and **Secret Key** with full EC2 permissions.
+*  Create a **Key Pair** in AWS.
+*  Choose the **region** where this key pair exists and enter its **exact name** in the form.
 """)
 
 # Initialize session state
@@ -171,9 +171,9 @@ def submit_request(prompt: str):
         
         if result and "error" not in result:
             st.session_state.request_id = result.get("request_id")
-            st.success(f"✅ Request submitted successfully! ID: {st.session_state.request_id}")
+            st.success(f"Request submitted successfully! ID: {st.session_state.request_id}")
         else:
-            st.error(f"❌ Error submitting request: {result.get('error', 'Unknown error')}")
+            st.error(f"Error submitting request: {result.get('error', 'Unknown error')}")
 
 
 def poll_ai_result(request_id: str) -> Optional[str]:
@@ -190,19 +190,19 @@ def poll_ai_result(request_id: str) -> Optional[str]:
             status = result.get("status")
             
             if status == "done":
-                placeholder.success("✅ Configuration ready for review!")
+                placeholder.success("Configuration ready for review!")
                 return result.get("result")
             else:
-                placeholder.info(f"⏳ AI is processing... ({attempt + 1}s)")
+                placeholder.info(f"AI is processing... ({attempt + 1}s)")
         else:
-            placeholder.error(f"❌ Error fetching result: {result.get('error', 'Unknown error')}")
+            placeholder.error(f"Error fetching result: {result.get('error', 'Unknown error')}")
             st.error("Please make sure you have configured OpenAI API key with 'GITHUB_TOKEN' environment variable")
             return None
         
         time.sleep(1)
         attempt += 1
     
-    placeholder.error("⏱️ Timeout: AI processing took too long. Please try again.")
+    placeholder.error("Timeout: AI processing took too long. Please try again.")
     return None
 
 
@@ -220,13 +220,13 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
     status_placeholder = st.empty()
     
     # Step 1: Trigger deployment (call once)
-    progress_placeholder.info("🚀 Initiating EC2 deployment...")
+    progress_placeholder.info("Initiating EC2 deployment...")
     result = make_api_request("POST", "/create-ec2", json=payload)
     
     if result and "error" in result:
         st.session_state.deployment_status = "failed"
         st.session_state.error_message = result.get("error")
-        status_placeholder.error(f"❌ Deployment failed: {result.get('error')}")
+        status_placeholder.error(f"Deployment failed: {result.get('error')}")
         return
     
     # Step 2: Poll the result endpoint for status
@@ -244,14 +244,14 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
             status = status_result.get("status")
             
             if status in ("deploying", "in_progress", "processing"):
-                progress_placeholder.info(f"⏳ EC2 is being created... ({attempt * 2}s elapsed)")
+                progress_placeholder.info(f"EC2 is being created... ({attempt * 2}s elapsed)")
                 continue
             
             elif status in ("done", "deployed"):
                 st.session_state.deployment_status = "success"
                 st.session_state.deployment_complete = True
                 progress_placeholder.empty()
-                status_placeholder.success("🎉 EC2 deployment completed successfully!")
+                status_placeholder.success("EC2 deployment completed successfully!")
                 
                 # Give DB a moment to update with final details
                 time.sleep(3)
@@ -289,7 +289,7 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
                     parsed_data = result_data
                 
                 # Build deployment details message
-                details_lines = ["<strong>✅ Deployment Successful!</strong><br><br>"]
+                details_lines = ["<strong>Deployment Successful!</strong><br><br>"]
                 
                 # Check if we have valid parsed data
                 if parsed_data and isinstance(parsed_data, dict) and len(parsed_data) > 0:
@@ -343,16 +343,16 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
                     error_msg = result_data.get("error", "Unknown error occurred")
                 
                 st.session_state.error_message = error_msg
-                status_placeholder.error(f"❌ Deployment failed: {error_msg}")
+                status_placeholder.error(f"Deployment failed: {error_msg}")
                 return
         else:
             # If we can't get status, keep trying
-            progress_placeholder.info(f"⏳ Checking deployment status... ({attempt * 2}s elapsed)")
+            progress_placeholder.info(f"Checking deployment status... ({attempt * 2}s elapsed)")
     
     # Timeout
     st.session_state.deployment_status = "failed"
     st.session_state.error_message = "Deployment timeout"
-    status_placeholder.error("⏱️ Deployment timeout. Please check AWS console for instance status.")
+    status_placeholder.error("Deployment timeout. Please check AWS console for instance status.")
 
 
 # Main UI Flow
@@ -372,7 +372,7 @@ if st.session_state.request_id and not st.session_state.ai_result and not st.ses
 
 # Step 3: Display AI Result and Confirm
 if st.session_state.ai_result and not st.session_state.confirmed:
-    st.subheader("💬 Configuration Chat")
+    st.subheader("Configuration Chat")
     
     # Chat container
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
@@ -399,14 +399,14 @@ if st.session_state.ai_result and not st.session_state.confirmed:
 # Step 4: AWS Credentials and Deployment
 if st.session_state.confirmed and not st.session_state.deployment_complete:
     # Keep the chat visible
-    st.subheader("💬 Configuration Chat")
+    st.subheader("Configuration Chat")
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     if st.session_state.user_prompt:
         display_chat_message(st.session_state.user_prompt, sender="user")
     display_chat_message(st.session_state.ai_result, sender="ai")
     st.markdown('</div>', unsafe_allow_html=True)
     
-    st.subheader("🔐 Enter Your AWS Credentials")
+    st.subheader("Enter Your AWS Credentials")
     
     aws_access = st.text_input(
         "AWS Access Key ID", 
@@ -443,7 +443,7 @@ if st.session_state.confirmed and not st.session_state.deployment_complete:
 
 # Step 5: Show success message and option to deploy another
 if st.session_state.deployment_complete:
-    st.subheader("💬 Configuration Chat")
+    st.subheader("Configuration Chat")
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     
     # Show original conversation

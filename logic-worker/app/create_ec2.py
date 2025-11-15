@@ -22,19 +22,19 @@ def validate_ec2_credentials(region, aws_access_key_id, aws_secret_access_key):
         
         # Simple, non-destructive API call
         ec2.describe_regions()
-        log.info(f"✅ AWS EC2 credentials valid for region: {region}")
+        log.info(f"AWS EC2 credentials valid for region: {region}")
         return ec2
 
     except ClientError as e:
         code = e.response["Error"]["Code"]
         if code in ["AuthFailure", "UnrecognizedClientException"]:
-            raise ValueError("❌ Invalid or unauthorized AWS credentials.")
+            raise ValueError("Invalid or unauthorized AWS credentials.")
         elif code == "UnauthorizedOperation":
-            raise ValueError("❌ AWS credentials are valid but lack EC2 permissions.")
+            raise ValueError("AWS credentials are valid but lack EC2 permissions.")
         else:
-            raise ValueError(f"❌ AWS EC2 validation failed: {e}")
+            raise ValueError(f"AWS EC2 validation failed: {e}")
     except Exception as e:
-        raise ValueError(f"❌ Unexpected error during EC2 credential validation: {e}")
+        raise ValueError(f"Unexpected error during EC2 credential validation: {e}")
 
 
 def get_latest_ubuntu_ami(region, 
