@@ -6,12 +6,19 @@ import os
 import json
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
-from background import add_responsive_bg
+from background import add_responsive_bg, add_logo
+from PIL import Image
 
 # Page configuration
-st.set_page_config(page_title="AWS EC2 Docker Deployer", page_icon="🚀")
+st.set_page_config(page_title="AWS EC2 Deployer",
+                    page_icon="ui/assets/favicon.png")
 
-add_responsive_bg("./assets/background.jpg")
+# logo = Image.open("ui/assets/logo.png")
+# st.image(logo, width=180)
+
+add_responsive_bg("ui/assets/background.jpg")
+
+add_logo("ui/assets/logo.png", width=400)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,7 +46,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("AWS EC2 Docker Deployer")
+# st.title("AWS EC2 Deployer")
 
 # Check for API key
 if "GITHUB_TOKEN" not in os.environ:
@@ -263,14 +270,14 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
                 # Fetch the result again to get updated details
                 final_result = make_api_request("GET", f"/result/{request_id}")
 
-                print("FINAL-RESULT: ", final_result)
+                # print("FINAL-RESULT: ", final_result)
                 
                 if final_result and "error" not in final_result:
                     result_data = final_result.get("result")
-                    print("RESULT-DATA: ", result_data)
+                    # print("RESULT-DATA: ", result_data)
                 else:
                     result_data = status_result.get("result")
-                    print("RESULT-DATA-STATUS: ", status_result)
+                    # print("RESULT-DATA-STATUS: ", status_result)
                 
                 # Parse the result - it's a JSON string in the database
                 parsed_data = None
@@ -300,7 +307,7 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
                     # Extract your specific fields
                     public_ip = parsed_data.get("public_ip")
                     console_link = parsed_data.get("console_link")
-                    print("PUBLIC-IP: ", public_ip, " CONSOLE-LINK: ", console_link)
+                    # print("PUBLIC-IP: ", public_ip, " CONSOLE-LINK: ", console_link)
                     
                     # Also try alternative field names
                     # instance_id = parsed_data.get("instance_id") or parsed_data.get("InstanceId") or parsed_data.get("id")
@@ -429,9 +436,9 @@ if st.session_state.confirmed and not st.session_state.deployment_complete:
     st.session_state.aws_access = aws_access
     st.session_state.aws_secret = aws_secret
     
-    if st.button("🚀 Deploy EC2 Instance", use_container_width=True):
+    if st.button("Deploy EC2 Instance", use_container_width=True):
         if not aws_access or not aws_secret:
-            st.warning("⚠️ Please fill in both AWS credentials.")
+            st.warning("Please fill in both AWS credentials.")
         elif st.session_state.deployment_status == "deploying":
             st.info("⏳ Deployment already in progress...")
         else:
@@ -463,6 +470,6 @@ if st.session_state.deployment_complete:
     
     st.balloons()
     
-    if st.button("🆕 Deploy Another Instance", use_container_width=True):
+    if st.button("Deploy Another Instance", use_container_width=True):
         reset_session_state()
         st.rerun()

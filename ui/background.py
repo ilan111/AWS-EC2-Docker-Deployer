@@ -1,5 +1,7 @@
 import base64
 import streamlit as st
+import os
+from PIL import Image
 
 def add_responsive_bg(image_file):
     with open(image_file, "rb") as f:
@@ -53,3 +55,43 @@ def add_responsive_bg(image_file):
         """,
         unsafe_allow_html=True
     )
+
+def add_logo(logo_path: str, width: int = 200):
+    """Place a centered logo with real, enforced width (works regardless of Streamlit quirks)."""
+
+    # Load file
+    with open(logo_path, "rb") as f:
+        logo_bytes = f.read()
+    logo_base64 = base64.b64encode(logo_bytes).decode()
+
+    # CSS + HTML injected directly in absolute layer
+    html = f"""
+    <style>
+        .logo-container {{
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }}
+        .logo-img {{
+            width: {width}px !important;
+            max-width: {width}px !important;
+            height: auto !important;
+        }}
+    </style>
+
+    <div class="logo-container">
+        <img class="logo-img" src="data:image/png;base64,{logo_base64}">
+    </div>
+    """
+
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def img_to_base64(img):
+    """Convert PIL image to base64 string."""
+    from io import BytesIO
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    return base64.b64encode(buf.getvalue()).decode("utf-8")
