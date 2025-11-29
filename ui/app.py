@@ -11,14 +11,11 @@ from PIL import Image
 
 # Page configuration
 st.set_page_config(page_title="AWS EC2 Deployer",
-                    page_icon="ui/assets/favicon.png")
+                    page_icon="./assets/favicon.png")
 
-# logo = Image.open("ui/assets/logo.png")
-# st.image(logo, width=180)
+add_responsive_bg("./assets/background.jpg")
 
-add_responsive_bg("ui/assets/background.jpg")
-
-add_logo("ui/assets/logo.png", width=400)
+add_logo("./assets/logo.png", width=400)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
