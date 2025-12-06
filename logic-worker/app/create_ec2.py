@@ -169,6 +169,7 @@ def create_ec2_instance(region,
         instance_id = response['Instances'][0]['InstanceId']
         instance_type = response['Instances'][0]['InstanceType']
         instance_keypair_name = response['Instances'][0]['KeyName']
+        instance_region = response['Instances'][0]['Placement']['AvailabilityZone']
         log.info(f"Created EC2 instance with ID: {instance_id}")
         
         # Wait for the instance to be running
@@ -182,13 +183,19 @@ def create_ec2_instance(region,
         
         # Construct AWS Console link
         console_link = f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#InstanceDetails:instanceId={instance_id}"
-        
+        docker_app_link = f"http://{public_ip}"
+
         log.info(f"Instance {instance_id} is running with public IP: {public_ip}")
         log.info(f"AWS Console link: {console_link}")
         
         return {
             'public_ip': public_ip,
-            'console_link': console_link
+            'console_link': console_link,
+            'instance_id': instance_id,
+            'instance_type': instance_type,
+            'keypair_name': instance_keypair_name,
+            'docker_app_link': docker_app_link,
+            'instance_region': instance_region
         }
 
     except Exception as e:

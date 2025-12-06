@@ -70,7 +70,12 @@ class MessageProcessor:
                 db_request.status = "deployed"
                 result_json = json.dumps({
                     "public_ip": instance_details_json["public_ip"], 
-                    "console_link": instance_details_json["console_link"]
+                    "console_link": instance_details_json["console_link"],
+                    "instance_id": instance_details_json["instance_id"],
+                    "instance_type": instance_details_json["instance_type"],
+                    "keypair_name": instance_details_json["keypair_name"],
+                    "docker_app_link": instance_details_json["docker_app_link"],
+                    "instance_region": instance_details_json["instance_region"]
                 })
                 db_request.result = result_json
                 db.commit()

@@ -304,25 +304,27 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
                     # Extract your specific fields
                     public_ip = parsed_data.get("public_ip")
                     console_link = parsed_data.get("console_link")
-                    # print("PUBLIC-IP: ", public_ip, " CONSOLE-LINK: ", console_link)
-                    
-                    # Also try alternative field names
-                    # instance_id = parsed_data.get("instance_id") or parsed_data.get("InstanceId") or parsed_data.get("id")
-                    # region = parsed_data.get("region") or parsed_data.get("Region")
-                    # instance_type = parsed_data.get("instance_type") or parsed_data.get("InstanceType")
+                    instance_id = parsed_data.get("instance_id") or parsed_data.get("InstanceId") or parsed_data.get("id")
+                    instance_type = parsed_data.get("instance_type") or parsed_data.get("InstanceType")
+                    instance_region = parsed_data.get("instance_region")
+                    keypair_name = parsed_data.get("keypair_name")
+                    docker_app_link = parsed_data.get("docker_app_link")
                     
                     # Display available fields
-                    # if instance_id:
-                    #     details_lines.append(f"<strong>Instance ID:</strong> <code>{instance_id}</code><br>")
+                    if instance_id:
+                        details_lines.append(f"<strong>Instance ID:</strong> <code>{instance_id}</code><br>")
                     if public_ip:
                         details_lines.append(f"<strong>Public IP:</strong> <code>{public_ip}</code><br>")
-                    # if region:
-                    #     details_lines.append(f"<strong>Region:</strong> <code>{region}</code><br>")
-                    # if instance_type:
-                    #     details_lines.append(f"<strong>Instance Type:</strong> <code>{instance_type}</code><br>")
+                    if instance_region:
+                        details_lines.append(f"<strong>Region:</strong> <code>{instance_region}</code><br>")
+                    if instance_type:
+                        details_lines.append(f"<strong>Instance Type:</strong> <code>{instance_type}</code><br>")
+                    if keypair_name:
+                        details_lines.append(f"<strong>Instance Type:</strong> <code>{keypair_name}</code><br>")
                     if console_link:
-                        details_lines.append(f"<strong>Console Link:</strong> <a href='{console_link}' target='_blank' style='color: #667eea;'>View in AWS Console →</a><br>")
-                    
+                        details_lines.append(f"<strong>Console Link:</strong> <a href='{console_link}' target='_blank' style='color: #667eea;'>View in AWS Console</a><br>")
+                    if docker_app_link:
+                        details_lines.append(f"<strong>Instance Type:</strong> <a href='{docker_app_link}' target='_blank' style='color: #667eea;'>Link To Docker app</a><br>")
                     # If we only have the header (no fields were added), show all data
                     if len(details_lines) == 1:
                         details_lines.append(f"<strong>Details:</strong><br><pre style='background:#1a1a1a;padding:10px;border-radius:5px;overflow-x:auto;'>{json.dumps(parsed_data, indent=2)}</pre>")
