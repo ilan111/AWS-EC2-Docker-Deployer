@@ -120,6 +120,7 @@ def create_ec2_instance(req: EC2Credentials):
                 "region": config.get("region"),
                 "instance_type": config.get("instance_type"),
                 "docker_image": config.get("docker_image"),
+                "docker_internal_port": config.get("docker_internal_port"),
                 "key_name": config.get("key_name"),
                 "security_group": config.get("security_group", "default"),
                 "user_data": config.get("user_data")

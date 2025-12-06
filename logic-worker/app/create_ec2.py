@@ -63,7 +63,8 @@ def get_latest_ubuntu_ami(region,
 
 def create_ec2_instance(region, 
                         instance_type, 
-                        docker_image, 
+                        docker_image,
+                        docker_internal_port,
                         key_name='default', 
                         security_group='default', 
                         user_data=None, 
@@ -147,7 +148,7 @@ def create_ec2_instance(region,
     sudo systemctl start docker
     sudo systemctl enable docker
     sudo docker pull {docker_image}
-    sudo docker run -d -p 80:80 {docker_image}
+    sudo docker run -d -p 80:{docker_internal_port} {docker_image}
     """
     
     try:

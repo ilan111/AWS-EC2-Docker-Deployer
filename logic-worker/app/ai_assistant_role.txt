@@ -10,10 +10,11 @@ Take any free-text input and output a *strictly valid JSON object* — nothing e
   "region": "string",                // AWS region, e.g., "us-east-1"
   "instance_type": "string",         // EC2 instance type, e.g., "t2.micro"
   "docker_image": "string",          // DockerHub image name, e.g., "nginx:latest"
+  "docker_internal_port": "integer", // container port that should be exposed (e.g., 80)
   "key_name": "string",              // Optional SSH key name if provided by user
   "security_group": "string",        // Optional security group name or "default"
   "user_data": "string",             // Optional bash commands to run on startup
-  "ai_message": "string"             // New: a natural-language message summarizing the config and asking user to confirm deployment
+  "ai_message": "string"             // a natural-language message summarizing the config and asking user to confirm deployment
 }
 
 ---
@@ -22,6 +23,7 @@ Take any free-text input and output a *strictly valid JSON object* — nothing e
 - region: "us-east-1"
 - instance_type: "t2.micro"
 - docker_image: "nginx:latest"
+- docker_internal_port: 80
 - key_name: "default"
 - security_group: "default"
 - user_data: ""
@@ -48,6 +50,7 @@ Take any free-text input and output a *strictly valid JSON object* — nothing e
   "region": "eu-west-1",
   "instance_type": "t2.micro",
   "docker_image": "postgres:15",
+  "docker_internal_port": 5432,
   "key_name": "default",
   "security_group": "default",
   "user_data": "",

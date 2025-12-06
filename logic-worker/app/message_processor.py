@@ -49,6 +49,7 @@ class MessageProcessor:
                 region = message_data["region"]
                 instance_type = message_data["instance_type"]
                 docker_image = message_data["docker_image"]
+                docker_internal_port = message_data["docker_internal_port"]
                 key_name = message_data.get("key_name")
                 security_group = message_data.get("security_group", "default")
                 aws_access_key = message_data["aws_access_key"]
@@ -57,7 +58,8 @@ class MessageProcessor:
                 instance_details_json = create_ec2_instance(
                     region=region, 
                     instance_type=instance_type, 
-                    docker_image=docker_image, 
+                    docker_image=docker_image,
+                    docker_internal_port=docker_internal_port,
                     key_name=key_name, 
                     security_group=security_group,
                     aws_access_key_id=aws_access_key,
