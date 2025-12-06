@@ -367,7 +367,7 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
 
 # Main UI Flow
 # Step 1: Prompt Input
-prompt = st.text_input("Enter your request (e.g., 'Deploy nginx container on AWS')")
+prompt = st.text_area("Enter your request (e.g., 'Deploy nginx container on AWS')", value="", height=None)
 
 if st.button("Submit Request"):
     submit_request(prompt)
