@@ -320,11 +320,11 @@ def deploy_ec2(request_id: str, aws_access: str, aws_secret: str):
                     if instance_type:
                         details_lines.append(f"<strong>Instance Type:</strong> <code>{instance_type}</code><br>")
                     if keypair_name:
-                        details_lines.append(f"<strong>Instance Type:</strong> <code>{keypair_name}</code><br>")
+                        details_lines.append(f"<strong>Key Pair Name:</strong> <code>{keypair_name}</code><br>")
                     if console_link:
                         details_lines.append(f"<strong>Console Link:</strong> <a href='{console_link}' target='_blank' style='color: #667eea;'>View in AWS Console</a><br>")
                     if docker_app_link:
-                        details_lines.append(f"<strong>Instance Type:</strong> <a href='{docker_app_link}' target='_blank' style='color: #667eea;'>Link To Docker app</a><br>")
+                        details_lines.append(f"<strong>Docker App Link:</strong> <a href='{docker_app_link}' target='_blank' style='color: #667eea;'>Link To Docker app</a><br>")
                     # If we only have the header (no fields were added), show all data
                     if len(details_lines) == 1:
                         details_lines.append(f"<strong>Details:</strong><br><pre style='background:#1a1a1a;padding:10px;border-radius:5px;overflow-x:auto;'>{json.dumps(parsed_data, indent=2)}</pre>")
