@@ -88,25 +88,52 @@ def create_ec2_instance(region,
     # Initialize EC2 client
     ec2 = validate_ec2_credentials(region=region, aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
 
-    # Get default security group
-    sg = ec2.describe_security_groups(GroupNames=['default'])['SecurityGroups'][0]
-    sg_id = sg['GroupId']
-    print("sg_id", sg_id)
+    # # Get default security group
+    # sg = ec2.describe_security_groups(GroupNames=['default'])['SecurityGroups'][0]
+    # 
 
-    # Ensure SSH inbound is allowed
+    # Get the default VPC
+    vpc_id = ec2.describe_vpcs(
+        Filters=[{"Name": "isDefault", "Values": ["true"]}]
+    )["Vpcs"][0]["VpcId"]
+
+    # CREATE A NEW SECURITY GROUP
+    sg_name = "ec2-http-ssh"
     try:
+        new_sg = ec2.create_security_group(
+            GroupName=sg_name,
+            Description="Allow SSH + HTTP",
+            VpcId=vpc_id
+        )
+        sg_id = new_sg["GroupId"]
+
         ec2.authorize_security_group_ingress(
             GroupId=sg_id,
-            IpPermissions=[{
-                'IpProtocol': 'tcp',
-                'FromPort': 22,
-                'ToPort': 22,
-                'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-            }]
+            IpPermissions=[
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 22,
+                    "ToPort": 22,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}]
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 80,
+                    "ToPort": 80,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}]
+                }
+            ]
         )
+
     except ClientError as e:
-        if "InvalidPermission.Duplicate" in str(e):
-            pass  # SSH already allowed
+        if "InvalidGroup.Duplicate" in str(e):
+            # If already exists, fetch it
+            sg_id = ec2.describe_security_groups(
+                Filters=[
+                    {"Name": "group-name", "Values": [sg_name]},
+                    {"Name": "vpc-id", "Values": [vpc_id]},
+                ]
+            )["SecurityGroups"][0]["GroupId"]
         else:
             raise
 
@@ -139,6 +166,8 @@ def create_ec2_instance(region,
         )
         
         instance_id = response['Instances'][0]['InstanceId']
+        instance_type = response['Instances'][0]['InstanceType']
+        instance_keypair_name = response['Instances'][0]['KeyName']
         log.info(f"Created EC2 instance with ID: {instance_id}")
         
         # Wait for the instance to be running
