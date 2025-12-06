@@ -69,7 +69,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "8501"
+      - "8501:8501"
     env_file:
       - .env
     environment:

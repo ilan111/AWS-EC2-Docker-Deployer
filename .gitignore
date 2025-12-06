@@ -1,3 +1,2 @@
-.env
-/drafts
 .gitignore
+.env

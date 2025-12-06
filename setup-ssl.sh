@@ -44,13 +44,13 @@ echo "Temporary nginx config created"
 
 # Start nginx and certbot
 echo "Starting nginx..."
-docker-compose up -d nginx
+docker compose up -d nginx
 
 sleep 5
 
 # Request certificate
 echo "Requesting SSL certificate from Let's Encrypt..."
-docker-compose run --rm certbot certonly \
+docker compose run --rm certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
     --email $EMAIL \
@@ -122,7 +122,7 @@ EOF
     
     # Restart nginx with SSL config
     echo "Restarting nginx with SSL..."
-    docker-compose restart nginx
+    docker compose restart nginx
     
     echo ""
     echo "SSL setup complete!"
