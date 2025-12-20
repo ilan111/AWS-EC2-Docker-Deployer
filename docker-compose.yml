@@ -12,6 +12,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [web]
 
   kafka:
     container_name: kafka
@@ -29,6 +30,7 @@ services:
     ports:
       - "9092:9092"
     restart: always
+    networks: [web]
 
   api:
     build:
@@ -44,6 +46,7 @@ services:
       - kafka
     ports:
       - "8000:8000"
+    networks: [web]
 
   logic-worker:
     build:
@@ -53,7 +56,7 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: postgresql://postgres:postgres@postgres:5432/postgres
-      # GITHUB_TOKEN: ${GITHUB_TOKEN}
+      #GITHUB_TOKEN: ${GITHUB_TOKEN}
       #OPENAI_API_KEY: ${OPENAI_API_KEY}
     restart: always
     depends_on:
@@ -61,6 +64,7 @@ services:
       - postgres
     env_file:
       - .env
+    networks: [web]
 
   streamlit:
     container_name: streamlit_app
@@ -74,7 +78,8 @@ services:
       - .env
     environment:
       - API_URL=http://api:8000
-    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0 --server.enableCORS false --server.enableXsrfProtection false --server.baseUrlPath ""
+    networks: [web]
 
   nginx:
     image: nginx:alpine
@@ -85,13 +90,13 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    #      - ./certbot/conf:/etc/letsencrypt:ro
+    #      - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - streamlit
-    # networks:
-    #   - app-network
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+    networks: [web]
 
   certbot:
     image: certbot/certbot
@@ -101,7 +106,10 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks: [web]
 
 volumes:
   pg_data:
   certs:
+networks:
+  web:
