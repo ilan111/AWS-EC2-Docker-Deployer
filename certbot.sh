@@ -1,4 +1,9 @@
+#!/bin/bash
+
+#Edit the domain variable and run the script to create letsencrypt SSL certifications
+DOMAIN=yourdomain
+
 sudo apt install certbot
-sudo certbot certonly --standalone -d ec2deployer.com -d www.ec2deployer.com
-sudo cp /etc/letsencrypt/live/ec2deployer.com/fullchain.pem nginx/certs/
-sudo cp /etc/letsencrypt/live/ec2deployer.com/privkey.pem nginx/certs/
+sudo certbot certonly --standalone -d ${DOMAIN}.com -d www.${DOMAIN}.com
+sudo cp /etc/letsencrypt/live/${DOMAIN}.com/fullchain.pem nginx/certs/
+sudo cp /etc/letsencrypt/live/${DOMAIN}.com/privkey.pem nginx/certs/
